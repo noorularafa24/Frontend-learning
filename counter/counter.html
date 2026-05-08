@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+
+  <body>
+    <div class="2xl:container mx-auto bg-[#E7E3E8]">
+<div class="flex flex-col justify-center items-center">
+      <div class=" bg-[#E1AEF2] flex flex-col justify-center items-center py-14 px-24 mt-24 mb-32 rounded-3xl shadow-xl">
+
+
+        <p class=" font-bold text-[50px] text-[#16071A] pb-10 underline">COUNTER</p>
+        <p id="numberElement" class="text-white text-[60px] font-semibold pb-12">0</p>
+        
+
+
+        <div class="flex flex-row gap-4 ">
+          <button id="plusbtn" class="bg-[#16071A] text-white text-[20px] px-10 py-2 rounded-xl shadow-2xl">+</button>
+         <button id="resetbtn" class="bg-[#16071A] text-white text-[20px] px-10 py-2 rounded-xl shadow-2xl">reset</button>
+          <button id="minbtn" class="bg-[#16071A] text-white text-[20px] px-10 py-2 rounded-xl shadow-2xl">-</button>
+        </div>
+
+
+        </div>
+      </div>
+    </div>
+</div>
+
+    <script>
+        const plusbutton = document.getElementById("plusbtn");
+        const minusbutton = document.getElementById("minbtn");
+        const numElement = document.getElementById("numberElement");
+        const rstbtn = document.getElementById("resetbtn");
+
+        plusbutton.addEventListener("click",()=>{
+            numElement.textContent=parseInt(numElement.textContent)+1;
+            console.log("+ btn clicked")
+            console.log(plusbutton)
+        });
+
+        minusbutton.addEventListener("click",()=>{
+            numElement.textContent=parseInt(numElement.textContent)-1;
+            console.log("-btn clicked")
+        });
+
+        rstbtn.addEventListener("click",()=>{
+            numElement.textContent=0;
+            console.log("reset btn clicked")
+
+
+        });
+
+
+
+
+
+    </script>
+
+
+  </body>
+</html>
