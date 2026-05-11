@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+   
+    <div class="w-[30%] bg-pink-900 flex flex-col justify-center items-center py-10 px-6 rounded-xl shadow-lg">
+        <p class=" font-extrabold text-[30px] text-pink-100 pb-4">TIMER</p>
+        <p id="num" class="text-white text-[40px] font-bold">0</p>
+
+        <div class="flex flex-row gap-4 py-4 pt-6">
+            <button id="start" class="bg-pink-300 text-stone-800 rounded-lg px-6 py-2 font-bold hover:bg-pink-100 transition-colors">Start</button>
+            <button id="reset" class="bg-pink-300 text-stone-800 rounded-lg px-6 py-2 font-bold hover:bg-pink-100 transition-colors">Reset</button>
+            <button id="stop" class="bg-pink-300 text-stone-800 rounded-lg px-6 py-2 font-bold hover:bg-pink-100 transition-colors">Stop</button>
+        </div>
+    </div>
+
+
+    <script>
+        const startBtn = document.getElementById("start");
+        const stopBtn = document.getElementById("stop");
+        const NumberElement = document.getElementById("num");
+        const resetBtn = document.getElementById("reset");
+        let id;
+
+        startBtn.addEventListener("click",()=>{
+            id = setInterval(()=>{
+                NumberElement.textContent = parseInt(NumberElement.textContent)+1
+            },1000)
+        })
+  
+        stopBtn.addEventListener("click",()=>{
+
+            clearInterval(id);
+        })
+
+        resetBtn.addEventListener("click",()=>{
+            NumberElement.textContent = 0;
+        })
+
+
+    </script>
+</body>
+
+</html>

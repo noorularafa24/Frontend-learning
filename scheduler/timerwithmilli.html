@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Millisecond Timer</title>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+   
+    <div class="w-[30%] bg-pink-900 flex flex-col justify-center items-center py-10 px-6 rounded-xl shadow-lg">
+        <p class="font-extrabold text-[30px] text-pink-100 pb-4">TIMER</p>
+        <!-- Initial display set to 00:00:00 -->
+        <p id="num" class="text-white text-[40px] font-mono font-bold tracking-widest">00:00:00</p>
+
+        <div class="flex flex-row gap-4 py-4 pt-6">
+            <button id="start" class="bg-pink-300 text-stone-800 rounded-lg px-6 py-2 font-bold hover:bg-pink-100 transition-colors">Start</button>
+            <button id="reset" class="bg-pink-300 text-stone-800 rounded-lg px-6 py-2 font-bold hover:bg-pink-100 transition-colors">Reset</button>
+            <button id="stop" class="bg-pink-300 text-stone-800 rounded-lg px-6 py-2 font-bold hover:bg-pink-100 transition-colors">Stop</button>
+        </div>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById("start");
+        const stopBtn = document.getElementById("stop");
+        const resetBtn = document.getElementById("reset");
+        const numberElement = document.getElementById("num");
+
+        let startTime;
+        let elapsedTime = 0;
+        let timerInterval;
+
+        function updateTime() {
+            const now = Date.now();
+            // Calculate total time passed in milliseconds
+            const timeDiff = now - startTime + elapsedTime;
+
+            // Math to extract minutes, seconds, and centiseconds (1/100th of a second)
+            const minutes = Math.floor(timeDiff / 60000);
+            const seconds = Math.floor((timeDiff % 60000) / 1000);
+            const milliseconds = Math.floor((timeDiff % 1000) / 10); // Displaying two digits
+
+            // Formatting to ensure double digits (e.g., 01:05:09)
+            const displayMin = minutes.toString().padStart(2, '0');
+            const displaySec = seconds.toString().padStart(2, '0');
+            const displayMs = milliseconds.toString().padStart(2, '0');
+
+            numberElement.textContent = `${displayMin}:${displaySec}:${displayMs}`;
+        }
+
+        startBtn.addEventListener("click", () => {
+            // Prevent multiple intervals from running if Start is clicked twice
+            if (timerInterval) return;
+
+            startTime = Date.now();
+            // Run every 10ms for smooth millisecond updates
+            timerInterval = setInterval(updateTime, 10);
+        });
+
+        stopBtn.addEventListener("click", () => {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                // Save the time elapsed so far so it doesn't reset when we resume
+                elapsedTime += Date.now() - startTime;
+            }
+        });
+
+        resetBtn.addEventListener("click", () => {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            startTime = null;
+            elapsedTime = 0;
+            numberElement.textContent = "00:00:00";
+        });
+    </script>
+</body>
+</html>
