@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glassy Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!--FireBase SDK-->
+    <script
+      defer
+      src="https://www.gstatic.com/firebasejs/8.10.1/firebase.js"
+    ></script>
+    <script
+      defer
+      src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"
+    ></script>
+    <script
+      defer
+      src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"
+    ></script>
+  </head>
+
+  <body>
+    <div
+      class="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-purple-700 via-pink-500 to-blue-500 relative overflow-hidden"
+    >
+      <!-- background circles -->
+      <div
+        class="absolute w-72 h-72 bg-pink-300 rounded-full blur-3xl opacity-30 top-10 left-20"
+      ></div>
+      <div
+        class="absolute w-72 h-72 bg-blue-300 rounded-full blur-3xl opacity-30 bottom-10 right-20"
+      ></div>
+
+      <!-- heading -->
+      <h1
+        class="text-white text-4xl md:text-5xl font-bold mb-12 z-10 tracking-wide"
+      >
+        FORM VALIDATION
+      </h1>
+
+      <!-- glass form -->
+      <div
+        class="z-10 w-[350px] p-10 rounded-3xl bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl"
+      >
+        <h2 class="text-white text-3xl font-bold text-center mb-8">Sign In</h2>
+
+        <form id="form" class="flex flex-col gap-5">
+          <div>
+            <label class="text-white font-medium">Email</label>
+            <input
+              id="email"
+              placeholder="Enter email"
+              class="w-full mt-2 px-4 py-3 rounded-xl bg-white/20 text-white placeholder-white/70 outline-none border border-white/30 focus:ring-2 focus:ring-pink-300"
+            />
+            <p id="mailerror"></p>
+          </div>
+
+          <div>
+            <label class="text-white font-medium">Password</label>
+            <input
+              id="pass"
+              placeholder="Enter password"
+              class="w-full mt-2 px-4 py-3 rounded-xl bg-white/20 text-white placeholder-white/70 outline-none border border-white/30 focus:ring-2 focus:ring-pink-300"
+            />
+            <p id="passerror"></p>
+          </div>
+
+          <button
+            class="mt-6 bg-white text-purple-700 font-semibold py-3 rounded-xl hover:bg-pink-200 transition duration-300 shadow-lg"
+          >
+            Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const formElement = document.getElementById("form");
+      const inputEmail = document.getElementById("email");
+      const inputPassword = document.getElementById("pass");
+      const mailError = document.getElementById("mailerror");
+      const passError = document.getElementById("passerror");
+
+      formElement.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        console.log(inputEmail.value, inputPassword.value);
+
+        const res = validateData(inputEmail.value, inputPassword.value);
+
+        if (res) {
+          saveDatatoDB(inputEmail.value, inputPassword.value);
+        }
+      });
+
+      function validateData(email, password) {
+        let isValid = true;
+
+        console.log(email, password);
+        const emailregex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+
+        if (!email.match(emailregex)) {
+          mailError.textContent = "please enter valid email address";
+
+          isValid = false;
+        }
+
+        return isValid;
+      }
+
+      function saveDatatoDB(email, password) {
+        const firebaseConfig = {
+          apiKey: "AIzaSyA48fCezzUwUu93ZwUwsiOFL6tXJGcIiTk",
+          authDomain: "html-css-js-tailwindcss.firebaseapp.com",
+          databaseURL:
+            "https://html-css-js-tailwindcss-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "html-css-js-tailwindcss",
+          storageBucket: "html-css-js-tailwindcss.firebasestorage.app",
+          messagingSenderId: "176653343774",
+          appId: "1:176653343774:web:bc8da87ef34c102179e20f",
+        };
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.database().ref("registerform");
+
+        db.push({
+          email: email,
+          password: password,
+        });
+
+        formElement.reset();
+        mailError.textContent = "";
+        passError.textContent = "";
+      }
+    </script>
+  </body>
+</html>
