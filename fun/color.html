@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Party Galaxy</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; }
+        #webcam-container { position: absolute; bottom: 20px; right: 20px; width: 180px; height: 135px; border: 2px solid #ff00ff; border-radius: 8px; overflow: hidden; z-index: 10; background: #111; }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        #ui { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 12px; color: white; border: 1px solid #444; width: 220px; }
+        .status { font-size: 11px; color: #00ffcc; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; }
+        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; background: #222; border: 1px solid #555; color: #fff; border-radius: 4px; margin-bottom: 10px; }
+        .color-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        input[type="color"] { border: none; width: 40px; height: 40px; cursor: pointer; background: transparent; }
+        button { cursor: pointer; padding: 8px; margin: 3px 0; display: block; width: 100%; border: 1px solid #444; border-radius: 4px; background: #333; color: white; font-size: 12px; transition: 0.2s; }
+        button:hover { background: #ff00ff; color: white; border-color: #ff00ff; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="webcam-container"><video id="webcam" autoplay playsinline></video></div>
+
+<div id="ui">
+    <div class="status" id="status">Warming up AI...</div>
+    <input type="text" id="userName" placeholder="Enter Name..." value="CHAMP">
+    
+    <div class="color-row">
+        <input type="color" id="mainColor" value="#00ffff" oninput="updateBaseColor(this.value)">
+        <span style="font-size: 11px;">Custom Color</span>
+    </div>
+
+    <div class="grid">
+        <button onclick="changeShape('sphere')">Sphere</button>
+        <button onclick="changeShape('heart')">Heart</button>
+        <button onclick="changeShape('fireworks')">Firework</button>
+        <button onclick="changeShape('saturn')">Saturn</button>
+    </div>
+    <hr style="border:0; border-top:1px solid #444; margin:10px 0;">
+    <button onclick="resetToGalaxy()" style="background:#444">Reset Galaxy</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+<script type="importmap">
+  { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    const PARTICLE_COUNT = 25000;
+    let isBirthdayMode = false;
+    let targetPos = new THREE.Vector3(0, 0, 0);
+    let currentScale = 1.0;
+    let targetScale = 1.0;
+    let baseColor = new THREE.Color("#00ffff");
+
+    // --- Scene Setup ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const geometry = new THREE.BufferGeometry();
+    const posArray = new Float32Array(PARTICLE_COUNT * 3);
+    const targetArray = new Float32Array(PARTICLE_COUNT * 3);
+    const colorArray = new Float32Array(PARTICLE_COUNT * 3);
+
+    const material = new THREE.PointsMaterial({
+        size: 0.04, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
+    });
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+
+    // --- Color Logic ---
+    window.updateBaseColor = (hex) => {
+        baseColor.set(hex);
+        if(!isBirthdayMode) applyColors(false);
+    }
+
+    function applyColors(isBirthday) {
+        const tempColor = new THREE.Color();
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const i3 = i * 3;
+            if (isBirthday) {
+                // Confetti Mode: Randomized bright colors
+                tempColor.setHSL(Math.random(), 0.8, 0.5);
+            } else {
+                // Gradient Mode: Mixes base color with slight variations
+                tempColor.copy(baseColor);
+                tempColor.offsetHSL(0, 0, (Math.random()-0.5)*0.2);
+            }
+            colorArray[i3] = tempColor.r;
+            colorArray[i3+1] = tempColor.g;
+            colorArray[i3+2] = tempColor.b;
+        }
+        geometry.attributes.color.needsUpdate = true;
+    }
+
+    // --- Text Generation ---
+    function getPointsFromText(text) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 600; canvas.height = 200;
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 50px Arial';
+        ctx.fillText('HAPPY BIRTHDAY', 300, 60);
+        ctx.font = 'bold 80px Arial';
+        ctx.fillText(text.toUpperCase(), 300, 150);
+
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        const pts = [];
+        for (let y = 0; y < canvas.height; y += 2) {
+            for (let x = 0; x < canvas.width; x += 2) {
+                if (data[(y * canvas.width + x) * 4] > 128) {
+                    pts.push({ x: (x - 300) * 0.06, y: (100 - y) * 0.06, z: (Math.random()-0.5) });
+                }
+            }
+        }
+        return pts;
+    }
+
+    // --- Shape Logic ---
+    window.changeShape = (shape) => {
+        const name = document.getElementById('userName').value || "YOU";
+        const textPts = (shape === 'text') ? getPointsFromText(name) : [];
+        
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            let x, y, z;
+            const i3 = i * 3;
+            if (shape === 'text') {
+                const p = textPts[i % textPts.length];
+                x = p.x; y = p.y; z = p.z;
+            } else if (shape === 'heart') {
+                const t = Math.random() * Math.PI * 2;
+                x = 10 * Math.pow(Math.sin(t), 3);
+                y = 8 * Math.cos(t) - 3 * Math.cos(2*t) - 1.5 * Math.cos(3*t) - 0.5 * Math.cos(4*t);
+                z = (Math.random() - 0.5) * 5;
+                x *= 0.5; y *= 0.5;
+            } else if (shape === 'fireworks') {
+                const r = Math.random() * 10;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                x = r * Math.sin(phi) * Math.cos(theta);
+                y = r * Math.sin(phi) * Math.sin(theta);
+                z = r * Math.cos(phi);
+            } else if (shape === 'saturn') {
+                const angle = Math.random() * Math.PI * 2;
+                const r = (i % 5 === 0) ? 3 + Math.random() : 8 + Math.random() * 3;
+                x = Math.cos(angle) * r;
+                y = (i % 5 === 0) ? (Math.random()-0.5)*5 : (Math.random()-0.5)*0.5;
+                z = Math.sin(angle) * r;
+            } else { // Sphere
+                const u = Math.random(), v = Math.random();
+                const theta = 2 * Math.PI * u, phi = Math.acos(2 * v - 1);
+                x = 6 * Math.sin(phi) * Math.cos(theta);
+                y = 6 * Math.sin(phi) * Math.sin(theta);
+                z = 6 * Math.cos(phi);
+            }
+            targetArray[i3] = x; targetArray[i3+1] = y; targetArray[i3+2] = z;
+        }
+        applyColors(shape === 'text');
+    };
+
+    // --- Hand Tracking ---
+    const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6 });
+    hands.onResults((res) => {
+        if (res.multiHandLandmarks && res.multiHandLandmarks.length > 0) {
+            const h1 = res.multiHandLandmarks[0];
+            targetPos.set((0.5 - h1[0].x) * 20, (0.5 - h1[0].y) * 15, 0);
+            
+            if (res.multiHandLandmarks.length === 2) {
+                const h2 = res.multiHandLandmarks[1];
+                const dist = Math.hypot(h1[0].x - h2[0].x, h1[0].y - h2[0].y);
+                document.getElementById('status').innerText = dist > 0.6 ? "🎉 HAPPY BIRTHDAY! 🎉" : "PULL APART WIDE!";
+                if (dist > 0.6 && !isBirthdayMode) {
+                    isBirthdayMode = true;
+                    changeShape('text');
+                }
+            } else {
+                document.getElementById('status').innerText = "GALAXY READY";
+                targetScale = Math.max(0.5, Math.hypot(h1[4].x-h1[8].x, h1[4].y-h1[8].y) * 8);
+            }
+        }
+    });
+
+    const cam = new Camera(document.getElementById('webcam'), { onFrame: async () => await hands.send({image: webcam}), width: 640, height: 480 });
+    cam.start();
+
+    // --- Animation ---
+    function animate() {
+        requestAnimationFrame(animate);
+        currentScale += (targetScale - currentScale) * 0.1;
+        if (!isBirthdayMode) {
+            points.position.lerp(targetPos, 0.1);
+            points.rotation.y += 0.003;
+        } else {
+            points.position.lerp(new THREE.Vector3(0,0,0), 0.05);
+            points.rotation.y *= 0.95;
+        }
+        const pos = geometry.attributes.position.array;
+        for (let i = 0; i < PARTICLE_COUNT * 3; i++) {
+            pos[i] += (targetArray[i] * (isBirthdayMode ? 1.5 : currentScale) - pos[i]) * 0.08;
+        }
+        geometry.attributes.position.needsUpdate = true;
+        renderer.render(scene, camera);
+    }
+
+    window.resetToGalaxy = () => { isBirthdayMode = false; changeShape('saturn'); };
+    
+    // Init
+    for(let i=0; i<PARTICLE_COUNT*3; i++) posArray[i] = (Math.random()-0.5)*30;
+    geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+    changeShape('saturn');
+    camera.position.z = 15;
+    animate();
+</script>
+</body>
+</html>
