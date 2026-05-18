@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional Notes App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-cover bg-center bg-fixed"
+style="background-image:url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1600&q=80')">
+
+  <div class="min-h-screen bg-black/50 flex items-center justify-center p-6">
+    
+    <div class="w-full max-w-5xl backdrop-blur-xl bg-white/15 border border-white/20 rounded-3xl shadow-2xl p-8">
+      
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-5xl font-bold text-white tracking-wide">Smart Notes</h1>
+        <p class="text-gray-200 mt-2 text-lg">Capture ideas. Track progress. Stay focused.</p>
+      </div>
+
+      <!-- Input -->
+      <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <input id="title" type="text" placeholder="Title"
+          class="p-4 rounded-xl bg-white/90 outline-none shadow-md text-gray-700">
+        
+        <input id="note" type="text" placeholder="Write your note..."
+          class="p-4 rounded-xl bg-white/90 outline-none shadow-md text-gray-700">
+        
+        <button onclick="saveNote()"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition">
+          Save Note
+        </button>
+      </div>
+
+      <!-- Search -->
+      <input id="search" onkeyup="renderNotes()" placeholder="Search notes..."
+        class="w-full mb-6 p-4 rounded-xl bg-white/90 outline-none shadow-md text-gray-700">
+
+      <!-- Stats -->
+      <div class="flex justify-between text-white mb-4">
+        <p>Total Notes: <span id="count">0</span></p>
+        <p id="clock"></p>
+      </div>
+
+      <!-- Notes -->
+      <div id="notesContainer" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+
+    </div>
+
+  </div>
+
+<script>
+let notes = JSON.parse(localStorage.getItem("notes")) || [];
+let editIndex = null;
+
+function saveToStorage(){
+  localStorage.setItem("notes", JSON.stringify(notes));
+}
+
+function saveNote(){
+  const title = document.getElementById("title").value.trim();
+  const note = document.getElementById("note").value.trim();
+
+  if(!title || !note){
+    alert("Enter title and note");
+    return;
+  }
+
+  const date = new Date().toLocaleString();
+
+  if(editIndex !== null){
+    notes[editIndex] = {title, note, date};
+    editIndex = null;
+  } else {
+    notes.push({title, note, date});
+  }
+
+  document.getElementById("title").value = "";
+  document.getElementById("note").value = "";
+
+  saveToStorage();
+  renderNotes();
+}
+
+function deleteNote(index){
+  notes.splice(index,1);
+  saveToStorage();
+  renderNotes();
+}
+
+function editNote(index){
+  document.getElementById("title").value = notes[index].title;
+  document.getElementById("note").value = notes[index].note;
+  editIndex = index;
+}
+
+function renderNotes(){
+  const container = document.getElementById("notesContainer");
+  const search = document.getElementById("search").value.toLowerCase();
+
+  container.innerHTML = "";
+
+  const filtered = notes.filter(item =>
+    item.title.toLowerCase().includes(search) ||
+    item.note.toLowerCase().includes(search)
+  );
+
+  filtered.forEach((item,index)=>{
+    container.innerHTML += `
+      <div class="bg-white/90 rounded-2xl p-5 shadow-xl hover:scale-105 transition">
+        <h2 class="text-xl font-bold text-blue-700 mb-2">${item.title}</h2>
+        <p class="text-gray-700 mb-4">${item.note}</p>
+        <p class="text-sm text-gray-500 mb-4">${item.date}</p>
+
+        <div class="flex gap-2">
+          <button onclick="editNote(${index})"
+            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+            Edit
+          </button>
+
+          <button onclick="deleteNote(${index})"
+            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+            Delete
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("count").innerText = notes.length;
+}
+
+function updateClock(){
+  document.getElementById("clock").innerText = new Date().toLocaleTimeString();
+}
+
+setInterval(updateClock,1000);
+renderNotes();
+updateClock();
+</script>
+
+</body>
+</html>
